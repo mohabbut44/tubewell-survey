@@ -78,7 +78,7 @@
     <div id="map"></div>
     <div class="hint" id="mapHint" style="display:none">Pin vul jaygay thakle tene thik jaygay nin, ba map e tap korun.</div>
 
-    <label>Location of Deep Tubewell <span class="bn">/ নলকূপের অবস্থান (পূর্ণ ঠিকানা)</span> <span class="req">*</span></label>
+    <label>Location of Deep Tubewell <span class="bn">/ নলকূপের অবস্থান (পূর্ণ ঠিকানা)</span></label>
     <textarea id="location" rows="2" placeholder="GPS dile auto-fill hobe"></textarea>
     <div class="hint" id="addrStatus"></div>
 
@@ -89,39 +89,39 @@
       <div><label>District <span class="bn">/ জেলা</span></label><input id="district"></div>
     </div>
 
-    <label>Ward No. <span class="bn">/ ওয়ার্ড নং</span> <span class="req">*</span></label>
+    <label>Ward No. <span class="bn">/ ওয়ার্ড নং</span></label>
     <input id="ward" type="number" min="1" inputmode="numeric" placeholder="e.g. 14">
   </div>
 
   <div class="card">
     <h2>Operator</h2>
-    <label>Operator Name <span class="bn">/ অপারেটরের নাম</span> <span class="req">*</span></label>
+    <label>Operator Name <span class="bn">/ অপারেটরের নাম</span></label>
     <input id="operatorName">
-    <label>Operator Phone <span class="bn">/ মোবাইল নম্বর</span> <span class="req">*</span></label>
+    <label>Operator Phone <span class="bn">/ মোবাইল নম্বর</span></label>
     <input id="operatorPhone" type="tel" inputmode="tel" placeholder="01XXXXXXXXX">
   </div>
 
   <div class="card">
     <h2>Technical Data</h2>
-    <label>Collection Date <span class="bn">/ তথ্য সংগ্রহের তারিখ</span> <span class="req">*</span></label>
+    <label>Collection Date <span class="bn">/ তথ্য সংগ্রহের তারিখ</span></label>
     <input id="date" type="date">
 
-    <label>Depth of Strainer <span class="bn">/ স্ট্রেইনারের গভীরতা</span> <span class="req">*</span></label>
+    <label>Depth of Strainer <span class="bn">/ স্ট্রেইনারের গভীরতা</span></label>
     <div class="row">
       <input id="strainerDepth" type="number" step="any" min="0" inputmode="decimal">
       <select id="strainerUnit"><option>ft</option><option>m</option></select>
     </div>
 
-    <label>Pumping Hour <span class="bn">/ দৈনিক পাম্পিং ঘণ্টা</span> <span class="req">*</span></label>
+    <label>Pumping Hour <span class="bn">/ দৈনিক পাম্পিং ঘণ্টা</span></label>
     <input id="pumpingHour" type="number" step="any" min="0" max="24" inputmode="decimal" placeholder="hr/day">
 
-    <label>Pumping Capacity <span class="bn">/ পাম্পের ক্ষমতা</span> <span class="req">*</span></label>
+    <label>Pumping Capacity <span class="bn">/ পাম্পের ক্ষমতা</span></label>
     <div class="row">
       <input id="capacity" type="number" step="any" min="0" inputmode="decimal">
       <select id="capacityUnit"><option>cusec</option><option>L/s</option><option>m³/hr</option><option>gpm</option><option>HP</option></select>
     </div>
 
-    <label>Delivery <span class="bn">/ ডেলিভারি</span> <span class="req">*</span></label>
+    <label>Delivery <span class="bn">/ ডেলিভারি</span></label>
     <div class="row">
       <input id="delivery" type="number" step="any" min="0" inputmode="decimal">
       <select id="deliveryUnit"><option>inch (pipe dia)</option><option>m³/day</option><option>L/s</option><option>cusec</option></select>
@@ -269,16 +269,7 @@
     const g = document.querySelector('input[name="surveyor"]:checked');
     d.surveyor = g ? g.value : '';
 
-    const req = { ward:'Ward No.', operatorName:'Operator Name', operatorPhone:'Operator Phone',
-                  date:'Collection Date', strainerDepth:'Depth of Strainer', pumpingHour:'Pumping Hour',
-                  capacity:'Pumping Capacity', delivery:'Delivery' };
-    const missing = Object.keys(req).filter(k => !d[k]).map(k => req[k]);
-    if (!d.location && !(d.lat && d.lng)) missing.unshift('Location / GPS');
-    if (!d.surveyor) missing.unshift('Surveyor Group');
-    if (missing.length) return showMsg('Ei field gulo puron korun: ' + missing.join(', '), false);
-    if (!/^(\+?88)?01[3-9]\d{8}$/.test(d.operatorPhone.replace(/[\s-]/g, '')))
-      return showMsg('Phone number thik nei (01XXXXXXXXX).', false);
-    if (Number(d.pumpingHour) > 24) return showMsg('Pumping hour 24 er beshi hote parbe na.', false);
+    if (!d.surveyor) return showMsg('Group select korun (Group 1 / 2 / 3).', false);
 
     d.photo = photoData;
     try { localStorage.setItem('surveyor', d.surveyor); } catch (e) {}
