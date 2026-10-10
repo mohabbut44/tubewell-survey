@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Tubewell Survey</title>
+<style>
+  :root { --g:#0b6e4f; --bg:#f3f6f4; --card:#fff; --txt:#1c2a24; --mut:#66756e; --err:#c0392b; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali",sans-serif; background:var(--bg); color:var(--txt); }
+  header { background:var(--g); color:#fff; padding:18px 16px; }
+  header h1 { margin:0; font-size:20px; }
+  header p { margin:4px 0 0; font-size:13px; opacity:.85; }
+  form { max-width:640px; margin:0 auto; padding:16px; }
+  .card { background:var(--card); border-radius:12px; padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .card h2 { margin:0 0 12px; font-size:15px; color:var(--g); }
+  label { display:block; font-size:14px; font-weight:600; margin:12px 0 5px; }
+  label .bn { font-weight:400; color:var(--mut); }
+  label .req { color:var(--err); }
+  input, select, textarea { width:100%; padding:11px 12px; font-size:16px; border:1px solid #cfd8d3; border-radius:8px; background:#fff; color:var(--txt); }
+  input:focus, select:focus, textarea:focus { outline:2px solid var(--g); border-color:transparent; }
+  .row { display:flex; gap:8px; }
+  .row > :first-child { flex:2; } .row > :last-child { flex:1; }
+  .groups { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .grp { margin:0; cursor:pointer; }
+  .grp input { position:absolute; opacity:0; width:0; height:0; }
+  .grp span { display:block; padding:12px 6px; border:2px solid #cfd8d3; border-radius:10px; text-align:center; background:#fff; transition:.15s; }
+  .grp b { display:block; font-size:15px; }
+  .grp small { display:block; font-size:13px; font-weight:500; color:var(--mut); margin-top:2px; }
+  .grp input:checked + span { background:var(--g); border-color:var(--g); color:#fff; }
+  .grp input:checked + span small { color:#d6efe4; }
+  .grp input:focus-visible + span { outline:2px solid var(--g); outline-offset:2px; }
+  .btn { display:block; width:100%; padding:13px; font-size:16px; font-weight:600; border:0; border-radius:8px; cursor:pointer; }
+  .btn-sec { background:#e3efe9; color:var(--g); margin-top:8px; }
+  .btn-pri { background:var(--g); color:#fff; }
+  .btn:disabled { opacity:.6; cursor:wait; }
+  .hint { font-size:12px; color:var(--mut); margin-top:5px; }
+  #gpsStatus.ok { color:var(--g); } #gpsStatus.bad { color:var(--err); }
+  #msg { padding:12px; border-radius:8px; margin-bottom:14px; display:none; font-size:14px; }
+  #msg.ok { display:block; background:#dff3e8; color:#0b5a40; }
+  #msg.bad { display:block; background:#fbe3e0; color:var(--err); }
+  #preview { max-width:100%; border-radius:8px; margin-top:8px; display:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Deep Tubewell Survey</h1>
+  <p>গভীর নলকূপ জরিপ ফর্ম</p>
+</header>
+
+<form id="f" novalidate>
+  <div id="msg"></div>
+
+  <div class="card">
+    <h2>Surveyor Group <span class="req" style="color:var(--err)">*</span></h2>
+    <div class="groups">
+      <label class="grp"><input type="radio" name="surveyor" value="Group 1 - Mohabbut"><span><b>Group 1</b><small>Mohabbut</small></span></label>
+      <label class="grp"><input type="radio" name="surveyor" value="Group 2 - Reddy"><span><b>Group 2</b><small>Reddy</small></span></label>
+      <label class="grp"><input type="radio" name="surveyor" value="Group 3 - Fuad"><span><b>Group 3</b><small>Fuad</small></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Location</h2>
+    <label>Location of Deep Tubewell <span class="bn">/ নলকূপের অবস্থান</span> <span class="req">*</span></label>
+    <input id="location" placeholder="Area / Mahalla / Landmark">
+    <button type="button" class="btn btn-sec" id="gpsBtn">📍 Get GPS Location</button>
+    <div class="row">
+      <input id="lat" placeholder="Latitude" inputmode="decimal" style="margin-top:8px">
+      <input id="lng" placeholder="Longitude" inputmode="decimal" style="margin-top:8px">
+    </div>
+    <div class="hint" id="gpsStatus">Phone er Location on kore button chapun.</div>
+
+    <label>Ward No. <span class="bn">/ ওয়ার্ড নং</span> <span class="req">*</span></label>
+    <input id="ward" type="number" min="1" inputmode="numeric" placeholder="e.g. 14">
+  </div>
+
+  <div class="card">
+    <h2>Operator</h2>
+    <label>Operator Name <span class="bn">/ অপারেটরের নাম</span> <span class="req">*</span></label>
+    <input id="operatorName">
+    <label>Operator Phone <span class="bn">/ মোবাইল নম্বর</span> <span class="req">*</span></label>
+    <input id="operatorPhone" type="tel" inputmode="tel" placeholder="01XXXXXXXXX">
+  </div>
+
+  <div class="card">
+    <h2>Technical Data</h2>
+    <label>Collection Date <span class="bn">/ তথ্য সংগ্রহের তারিখ</span> <span class="req">*</span></label>
+    <input id="date" type="date">
+
+    <label>Depth of Strainer <span class="bn">/ স্ট্রেইনারের গভীরতা</span> <span class="req">*</span></label>
+    <div class="row">
+      <input id="strainerDepth" type="number" step="any" min="0" inputmode="decimal">
+      <select id="strainerUnit"><option>ft</option><option>m</option></select>
+    </div>
+
+    <label>Pumping Hour <span class="bn">/ দৈনিক পাম্পিং ঘণ্টা</span> <span class="req">*</span></label>
+    <input id="pumpingHour" type="number" step="any" min="0" max="24" inputmode="decimal" placeholder="hr/day">
+
+    <label>Pumping Capacity <span class="bn">/ পাম্পের ক্ষমতা</span> <span class="req">*</span></label>
+    <div class="row">
+      <input id="capacity" type="number" step="any" min="0" inputmode="decimal">
+      <select id="capacityUnit"><option>cusec</option><option>L/s</option><option>m³/hr</option><option>gpm</option><option>HP</option></select>
+    </div>
+
+    <label>Delivery <span class="bn">/ ডেলিভারি</span> <span class="req">*</span></label>
+    <div class="row">
+      <input id="delivery" type="number" step="any" min="0" inputmode="decimal">
+      <select id="deliveryUnit"><option>inch (pipe dia)</option><option>m³/day</option><option>L/s</option><option>cusec</option></select>
+    </div>
+
+    <label>Remarks <span class="bn">/ মন্তব্য</span></label>
+    <textarea id="remarks" rows="2"></textarea>
+
+    <label>Photo <span class="bn">/ ছবি (ঐচ্ছিক)</span></label>
+    <input id="photo" type="file" accept="image/*" capture="environment">
+    <img id="preview" alt="">
+  </div>
+
+  <button type="submit" class="btn btn-pri" id="submitBtn">Submit / জমা দিন</button>
+  <p class="hint" style="text-align:center">Data Google Drive e save hobe.</p>
+</form>
+
+<script>
+  // Apps Script Web app URL (data ekhane jabe)
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGuVEWcpyG-im_IMFeRAr6IIPXiz2r3gy2rLO5wejRgK4tYxfFDlMDlYxao44MOBW7/exec';
+
+  const $ = id => document.getElementById(id);
+  const GPS_HINT = 'Phone er Location on kore button chapun.';
+  let photoData = null;
+
+  $('date').valueAsDate = new Date();
+  try {
+    const g = localStorage.getItem('surveyor');
+    if (g) { const r = document.querySelector('input[name="surveyor"][value="' + g + '"]'); if (r) r.checked = true; }
+  } catch (e) {}
+
+  $('gpsBtn').onclick = () => {
+    const s = $('gpsStatus');
+    if (!navigator.geolocation) { s.textContent = 'Ei browser e GPS nei. Hate likhun.'; s.className = 'hint bad'; return; }
+    s.textContent = 'Location khujchi...'; s.className = 'hint';
+    navigator.geolocation.getCurrentPosition(p => {
+      $('lat').value = p.coords.latitude.toFixed(6);
+      $('lng').value = p.coords.longitude.toFixed(6);
+      s.textContent = '✓ GPS paowa geche (±' + Math.round(p.coords.accuracy) + ' m)'; s.className = 'hint ok';
+    }, err => {
+      const why = err.code === 1 ? 'Location permission deya hoyni — browser settings e Allow korun'
+                : err.code === 3 ? 'Somoy shesh — khola jaygay giye abar chapun'
+                : 'Location paowa jacche na — phone er GPS on ache kina dekhun';
+      s.textContent = why + '. Na hole hate likhun.'; s.className = 'hint bad';
+    }, { enableHighAccuracy: true, timeout: 25000, maximumAge: 0 });
+  };
+
+  $('photo').onchange = e => {
+    const file = e.target.files[0];
+    if (!file) { photoData = null; $('preview').style.display = 'none'; return; }
+    const img = new Image();
+    img.onload = () => {
+      const max = 1280, sc = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const url = c.toDataURL('image/jpeg', 0.8);
+      photoData = { data: url.split(',')[1], type: 'image/jpeg' };
+      $('preview').src = url; $('preview').style.display = 'block';
+    };
+    img.src = URL.createObjectURL(file);
+  };
+
+  function showMsg(text, ok) {
+    const m = $('msg'); m.textContent = text; m.className = ok ? 'ok' : 'bad';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Works both inside Apps Script (google.script.run) and on GitHub Pages (fetch)
+  function send(d) {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      return new Promise((res, rej) => google.script.run
+        .withSuccessHandler(res).withFailureHandler(rej).submitData(d));
+    }
+    return fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(d)
+    }).then(r => r.json()).then(r => { if (!r.ok) throw new Error(r.error || 'Save failed'); return r; });
+  }
+
+  $('f').onsubmit = e => {
+    e.preventDefault();
+    const ids = ['location','lat','lng','ward','operatorName','operatorPhone','date',
+                 'strainerDepth','strainerUnit','pumpingHour','capacity','capacityUnit',
+                 'delivery','deliveryUnit','remarks'];
+    const d = {};
+    ids.forEach(k => d[k] = $(k).value.trim());
+    const g = document.querySelector('input[name="surveyor"]:checked');
+    d.surveyor = g ? g.value : '';
+
+    const req = { ward:'Ward No.', operatorName:'Operator Name', operatorPhone:'Operator Phone',
+                  date:'Collection Date', strainerDepth:'Depth of Strainer', pumpingHour:'Pumping Hour',
+                  capacity:'Pumping Capacity', delivery:'Delivery' };
+    const missing = Object.keys(req).filter(k => !d[k]).map(k => req[k]);
+    if (!d.location && !(d.lat && d.lng)) missing.unshift('Location / GPS');
+    if (!d.surveyor) missing.unshift('Surveyor Group');
+    if (missing.length) return showMsg('Ei field gulo puron korun: ' + missing.join(', '), false);
+    if (!/^(\+?88)?01[3-9]\d{8}$/.test(d.operatorPhone.replace(/[\s-]/g, '')))
+      return showMsg('Phone number thik nei (01XXXXXXXXX).', false);
+    if (Number(d.pumpingHour) > 24) return showMsg('Pumping hour 24 er beshi hote parbe na.', false);
+
+    d.photo = photoData;
+    try { localStorage.setItem('surveyor', d.surveyor); } catch (e) {}
+
+    const btn = $('submitBtn'); btn.disabled = true; btn.textContent = 'Saving...';
+    send(d).then(r => {
+      showMsg('✓ Save hoyeche! Mot entry: ' + r.count, true);
+      const keepWard = d.ward;
+      $('f').reset(); photoData = null; $('preview').style.display = 'none';
+      const r2 = document.querySelector('input[name="surveyor"][value="' + d.surveyor + '"]'); if (r2) r2.checked = true;
+      $('ward').value = keepWard;
+      $('date').valueAsDate = new Date();
+      $('gpsStatus').textContent = GPS_HINT; $('gpsStatus').className = 'hint';
+    }).catch(err => {
+      showMsg('Error: ' + (err.message || err) + ' — internet check kore abar try korun.', false);
+    }).finally(() => {
+      btn.disabled = false; btn.textContent = 'Submit / জমা দিন';
+    });
+  };
+</script>
+</body>
+</html>
