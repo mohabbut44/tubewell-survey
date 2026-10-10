@@ -5,7 +5,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deep Tubewell Survey</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
+  #map { height:240px; border-radius:10px; margin-top:10px; display:none; border:1px solid #cfd8d3; z-index:0; }
+  #addrStatus.ok { color:var(--g); } #addrStatus.bad { color:var(--err); }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .row2 label { margin-top:10px; }
   :root { --g:#0b6e4f; --bg:#f3f6f4; --card:#fff; --txt:#1c2a24; --mut:#66756e; --err:#c0392b; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali",sans-serif; background:var(--bg); color:var(--txt); }
@@ -63,14 +69,25 @@
 
   <div class="card">
     <h2>Location</h2>
-    <label>Location of Deep Tubewell <span class="bn">/ নলকূপের অবস্থান</span> <span class="req">*</span></label>
-    <input id="location" placeholder="Area / Mahalla / Landmark">
     <button type="button" class="btn btn-sec" id="gpsBtn">📍 Get GPS Location</button>
     <div class="row">
       <input id="lat" placeholder="Latitude" inputmode="decimal" style="margin-top:8px">
       <input id="lng" placeholder="Longitude" inputmode="decimal" style="margin-top:8px">
     </div>
     <div class="hint" id="gpsStatus">Phone er Location on kore button chapun.</div>
+    <div id="map"></div>
+    <div class="hint" id="mapHint" style="display:none">Pin vul jaygay thakle tene thik jaygay nin, ba map e tap korun.</div>
+
+    <label>Location of Deep Tubewell <span class="bn">/ নলকূপের অবস্থান (পূর্ণ ঠিকানা)</span> <span class="req">*</span></label>
+    <textarea id="location" rows="2" placeholder="GPS dile auto-fill hobe"></textarea>
+    <div class="hint" id="addrStatus"></div>
+
+    <div class="row2">
+      <div><label>Village / Mahalla <span class="bn">/ গ্রাম</span></label><input id="village"></div>
+      <div><label>Post Office / Code <span class="bn">/ ডাকঘর</span></label><input id="postcode"></div>
+      <div><label>Upazila / Thana <span class="bn">/ উপজেলা</span></label><input id="upazila"></div>
+      <div><label>District <span class="bn">/ জেলা</span></label><input id="district"></div>
+    </div>
 
     <label>Ward No. <span class="bn">/ ওয়ার্ড নং</span> <span class="req">*</span></label>
     <input id="ward" type="number" min="1" inputmode="numeric" placeholder="e.g. 14">
@@ -141,8 +158,7 @@
     if (!navigator.geolocation) { s.textContent = 'Ei browser e GPS nei. Hate likhun.'; s.className = 'hint bad'; return; }
     s.textContent = 'Location khujchi...'; s.className = 'hint';
     navigator.geolocation.getCurrentPosition(p => {
-      $('lat').value = p.coords.latitude.toFixed(6);
-      $('lng').value = p.coords.longitude.toFixed(6);
+      setPoint(p.coords.latitude, p.coords.longitude);
       s.textContent = '✓ GPS paowa geche (±' + Math.round(p.coords.accuracy) + ' m)'; s.className = 'hint ok';
     }, err => {
       const why = err.code === 1 ? 'Location permission deya hoyni — browser settings e Allow korun'
@@ -151,6 +167,63 @@
       s.textContent = why + '. Na hole hate likhun.'; s.className = 'hint bad';
     }, { enableHighAccuracy: true, timeout: 25000, maximumAge: 0 });
   };
+
+  // ---------- Map + reverse geocoding (OpenStreetMap) ----------
+  let map = null, marker = null, geoTimer = null;
+
+  function showMap(lat, lng) {
+    if (!window.L) return;
+    $('map').style.display = 'block'; $('mapHint').style.display = 'block';
+    if (!map) {
+      map = L.map('map').setView([lat, lng], 17);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+      marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+      marker.on('dragend', () => { const q = marker.getLatLng(); movedPin(q.lat, q.lng); });
+      map.on('click', e => { marker.setLatLng(e.latlng); movedPin(e.latlng.lat, e.latlng.lng); });
+    } else {
+      map.setView([lat, lng], 17); marker.setLatLng([lat, lng]);
+    }
+    setTimeout(() => map.invalidateSize(), 100);
+  }
+
+  function movedPin(lat, lng) {
+    $('lat').value = lat.toFixed(6); $('lng').value = lng.toFixed(6);
+    $('gpsStatus').textContent = '✓ Pin hate sorano hoyeche'; $('gpsStatus').className = 'hint ok';
+    reverseGeocode(lat, lng);
+  }
+
+  function setPoint(lat, lng) {
+    $('lat').value = lat.toFixed(6); $('lng').value = lng.toFixed(6);
+    showMap(lat, lng); reverseGeocode(lat, lng);
+  }
+
+  function reverseGeocode(lat, lng) {
+    clearTimeout(geoTimer);
+    geoTimer = setTimeout(async () => {
+      const s = $('addrStatus');
+      s.textContent = 'Address khujchi...'; s.className = 'hint';
+      try {
+        const r = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=en&lat=' + lat + '&lon=' + lng);
+        const j = await r.json();
+        const a = j.address || {};
+        $('location').value = j.display_name || '';
+        $('village').value  = a.village || a.hamlet || a.neighbourhood || a.suburb || a.quarter || a.residential || a.town || '';
+        $('postcode').value = a.postcode || '';
+        $('upazila').value  = a.county || a.city_district || a.municipality || a.city || a.town || '';
+        $('district').value = a.state_district || a.city || '';
+        s.textContent = '✓ Address auto-fill hoyeche — vul thakle edit korun'; s.className = 'hint ok';
+      } catch (e) {
+        s.textContent = 'Address paowa jaini — hate likhun'; s.className = 'hint bad';
+      }
+    }, 600);
+  }
+
+  // Manual lat/lng entry -> update map + address
+  ['lat', 'lng'].forEach(id => $(id).addEventListener('change', () => {
+    const la = parseFloat($('lat').value), ln = parseFloat($('lng').value);
+    if (!isNaN(la) && !isNaN(ln)) setPoint(la, ln);
+  }));
 
   $('photo').onchange = e => {
     const file = e.target.files[0];
@@ -188,7 +261,7 @@
 
   $('f').onsubmit = e => {
     e.preventDefault();
-    const ids = ['location','lat','lng','ward','operatorName','operatorPhone','date',
+    const ids = ['location','village','postcode','upazila','district','lat','lng','ward','operatorName','operatorPhone','date',
                  'strainerDepth','strainerUnit','pumpingHour','capacity','capacityUnit',
                  'delivery','deliveryUnit','remarks'];
     const d = {};
@@ -219,6 +292,8 @@
       $('ward').value = keepWard;
       $('date').valueAsDate = new Date();
       $('gpsStatus').textContent = GPS_HINT; $('gpsStatus').className = 'hint';
+      $('addrStatus').textContent = '';
+      $('map').style.display = 'none'; $('mapHint').style.display = 'none';
     }).catch(err => {
       showMsg('Error: ' + (err.message || err) + ' — internet check kore abar try korun.', false);
     }).finally(() => {
