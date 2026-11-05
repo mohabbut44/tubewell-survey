@@ -12,7 +12,7 @@
   #addrStatus.ok { color:var(--g); } #addrStatus.bad { color:var(--err); }
   .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .row2 label { margin-top:10px; }
-  :root { --g:#0b6e4f; --bg:#f3f6f4; --card:#fff; --txt:#1c2a24; --mut:#66756e; --err:#c0392b; }
+  :root { --g:#0b6e4f; --bg:#f3f6f4; --card:#fff; --txt:#1c2a24; --mut:#66756e; --err:#c0392b; --red:#c62828; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali",sans-serif; background:var(--bg); color:var(--txt); }
   header { background:var(--g); color:#fff; padding:18px 16px; }
@@ -47,6 +47,13 @@
   #msg.ok { display:block; background:#dff3e8; color:#0b5a40; }
   #msg.bad { display:block; background:#fbe3e0; color:var(--err); }
   #preview { max-width:100%; border-radius:8px; margin-top:8px; display:none; }
+
+  /* Bottle Number card (red) */
+  .bottle-card { background:#fff5f5; border-left:5px solid var(--red); }
+  .bottle-card h2 { color:var(--red); }
+  .bottle-card input { border-color:#ef9a9a; font-size:18px; font-weight:600; }
+  .bottle-card input:focus { outline:2px solid var(--red); border-color:transparent; }
+  .bottle-card input.invalid { border:2px solid var(--red); background:#fff; }
 </style>
 </head>
 <body>
@@ -101,6 +108,13 @@
     <input id="operatorPhone" type="tel" inputmode="tel" placeholder="01XXXXXXXXX">
   </div>
 
+  <div class="card bottle-card">
+    <h2>Bottle Number</h2>
+    <label for="bottleNo">Bottle No. <span class="bn">/ বোতল নম্বর</span></label>
+    <input id="bottleNo" type="text" inputmode="numeric" placeholder="e.g. 12" autocomplete="off">
+    <div class="hint">Sample je bottle e nilen, tar gaye lekha number din.</div>
+  </div>
+
   <div class="card">
     <h2>Technical Data</h2>
     <label>Collection Date <span class="bn">/ তথ্য সংগ্রহের তারিখ</span></label>
@@ -152,6 +166,8 @@
     const g = localStorage.getItem('surveyor');
     if (g) { const r = document.querySelector('input[name="surveyor"][value="' + g + '"]'); if (r) r.checked = true; }
   } catch (e) {}
+
+  $('bottleNo').addEventListener('input', () => $('bottleNo').classList.remove('invalid'));
 
   $('gpsBtn').onclick = () => {
     const s = $('gpsStatus');
@@ -261,8 +277,8 @@
 
   $('f').onsubmit = e => {
     e.preventDefault();
-    const ids = ['location','village','postcode','upazila','district','lat','lng','ward','operatorName','operatorPhone','date',
-                 'strainerDepth','strainerUnit','pumpingHour','capacity','capacityUnit',
+    const ids = ['location','village','postcode','upazila','district','lat','lng','ward','operatorName','operatorPhone',
+                 'bottleNo','date','strainerDepth','strainerUnit','pumpingHour','capacity','capacityUnit',
                  'delivery','deliveryUnit','remarks'];
     const d = {};
     ids.forEach(k => d[k] = $(k).value.trim());
@@ -276,12 +292,13 @@
 
     const btn = $('submitBtn'); btn.disabled = true; btn.textContent = 'Saving...';
     send(d).then(r => {
-      showMsg('✓ Save hoyeche! Mot entry: ' + r.count, true);
+      showMsg('✓ Save hoyeche!' + (d.bottleNo ? ' Bottle ' + d.bottleNo + ' —' : '') + ' Mot entry: ' + r.count, true);
       const keepWard = d.ward;
       $('f').reset(); photoData = null; $('preview').style.display = 'none';
       const r2 = document.querySelector('input[name="surveyor"][value="' + d.surveyor + '"]'); if (r2) r2.checked = true;
       $('ward').value = keepWard;
       $('date').valueAsDate = new Date();
+      $('bottleNo').classList.remove('invalid');
       $('gpsStatus').textContent = GPS_HINT; $('gpsStatus').className = 'hint';
       $('addrStatus').textContent = '';
       $('map').style.display = 'none'; $('mapHint').style.display = 'none';
